@@ -3,46 +3,46 @@ home页变成了post页；添加一个new post的页面，并且可以修改内�
 
 1. 添界面 - routes.py
 
-      @app.route("/post/<int:post_id>") 建立post 页面
-      def post(post_id):
-          post = Post.query.get_or_404(post_id)
-          return render_template('post.html', title=post.title, post=post)
+            @app.route("/post/<int:post_id>") 建立post 页面
+            def post(post_id):
+                post = Post.query.get_or_404(post_id)
+                return render_template('post.html', title=post.title, post=post)
 
-      @app.route("/post/<int:post_id>/update", methods=["GET", "POST"])
-      @login_required     必须登录，是自己的内容才能修改
-      def update_post(post_id):
-          post = Post.query.get_or_404(post_id)
-          if post.author != current_user:
-              abort(403)
-          form = PostForm()   更新的话，换内容
-          if form.validate_on_submit():
-              post.title=form.title.data
-              post.content=form.content.data
-              db.session.commit()
-              flash('Your post has been updated!', 'success')
-              return redirect(url_for('post', post_id=post.id))
-          elif request.method == 'GET':   先走这里，把信息存好
-              form.title.data = post.title
-              form.content.data = post.content
-          return render_template('create_post.html', title='Update Post', 
-              form=form, legend='Update Post')
+            @app.route("/post/<int:post_id>/update", methods=["GET", "POST"])
+            @login_required     必须登录，是自己的内容才能修改
+            def update_post(post_id):
+                post = Post.query.get_or_404(post_id)
+                if post.author != current_user:
+                    abort(403)
+                form = PostForm()   更新的话，换内容
+                if form.validate_on_submit():
+                    post.title=form.title.data
+                    post.content=form.content.data
+                    db.session.commit()
+                    flash('Your post has been updated!', 'success')
+                    return redirect(url_for('post', post_id=post.id))
+                elif request.method == 'GET':   先走这里，把信息存好
+                    form.title.data = post.title
+                    form.content.data = post.content
+                return render_template('create_post.html', title='Update Post', 
+                    form=form, legend='Update Post')
 
 
-      @app.route("/post/<int:post_id>/delete", methods=["POST"]) 删除选项
-      @login_required
-      def delete_post(post_id): 与上文一致
-          post = Post.query.get_or_404(post_id)
-          if post.author != current_user:
-              abort(403)
-          db.session.delete(post)
-          db.session.commit() 数据修改
-          flash('Your post has been deleted!', 'success') 页面提示
-          return redirect(url_for('home'))
+            @app.route("/post/<int:post_id>/delete", methods=["POST"]) 删除选项
+            @login_required
+            def delete_post(post_id): 与上文一致
+                post = Post.query.get_or_404(post_id)
+                if post.author != current_user:
+                    abort(403)
+                db.session.delete(post)
+                db.session.commit() 数据修改
+                flash('Your post has been deleted!', 'success') 页面提示
+                return redirect(url_for('home'))
 
 
 2. 文本编辑界面 - post.html
 基本和create post一样，但是这边其实是一个新表，先copy再修改不同
-显示图像+日期
+显示图像+日期 这一部分和home.html一致
 分为内容部分和model部分
 
          <article class="media content-section">
@@ -79,3 +79,25 @@ home页变成了post页；添加一个new post的页面，并且可以修改内�
             </div>
             </div>
         </div>
+
+
+3. 展示post的地方home.py
+
+            {% extends "layout.html" %}
+            {% block content %}
+                {% for post in posts %}
+                <article class="media content-section">
+                  <img src="{{ url_for('static', filename='profile_pics/' + post.author.image_file) }}" class="rounded-circle article-img"> 引用图像，且变成圆的
+                    <div class="media-body">
+                      <!-- <div class="article-metadata"> -->
+                        <a class="mr-2" href="#">{{ post.author.username }}</a> 引用用户名
+                        <small class="text-muted">{{ post.date_posted.strftime('%Y-%m-%d') }}</small> 展示年月日
+                      <!-- </div> -->
+                      <h2><a class="article-title" href="{{ url_for('post', post_id=post.id) }}">{{ post.title }}</a></h2>
+                              这里看一下：用户名，用post.title引用。而且导航回到post那一面，可以修改。所以用导航
+                              
+                     <p class="article-content">{{ post.content }}</p> 
+                    </div>
+                </article>
+                {% endfor %}
+            {% endblock content %}
